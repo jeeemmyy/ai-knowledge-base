@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Warm editorial "paper" theme — deep ink on warm off-white, single
+       terracotta accent. Distinctive without being loud. */
+    --background: 40 33% 98%;        /* warm paper */
+    --foreground: 24 10% 10%;        /* near-black ink */
+
+    --card: 40 33% 99%;
+    --card-foreground: 24 10% 10%;
+
+    --primary: 16 72% 45%;           /* terracotta / burnt sienna */
+    --primary-foreground: 40 33% 98%;
+
+    --secondary: 36 18% 92%;
+    --secondary-foreground: 24 10% 18%;
+
+    --muted: 36 16% 93%;
+    --muted-foreground: 28 6% 42%;
+
+    --accent: 16 60% 94%;            /* faint terracotta wash */
+    --accent-foreground: 16 72% 32%;
+
+    --destructive: 0 65% 48%;
+    --destructive-foreground: 40 33% 98%;
+
+    --border: 30 14% 87%;
+    --input: 30 14% 84%;
+    --ring: 16 72% 45%;
+
+    --radius: 0.625rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'liga' 1, 'calt' 1;
+  }
+
+  /* Subtle paper grain via a faint repeating gradient — adds depth without images. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+    background-image: radial-gradient(hsl(30 14% 80% / 0.25) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-fraunces), Georgia, serif;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer utilities {
+  /* Prose styling for rendered markdown answers. */
+  .prose-chat {
+    @apply text-[15px] leading-relaxed;
+  }
+  .prose-chat p { @apply my-2; }
+  .prose-chat ul { @apply my-2 list-disc pl-5; }
+  .prose-chat ol { @apply my-2 list-decimal pl-5; }
+  .prose-chat li { @apply my-1; }
+  .prose-chat code {
+    @apply rounded bg-muted px-1.5 py-0.5 font-mono text-[13px];
+  }
+  .prose-chat pre {
+    @apply my-3 overflow-x-auto rounded-lg bg-foreground/90 p-3 font-mono text-[13px] text-background;
+  }
+  .prose-chat pre code { @apply bg-transparent p-0; }
+  .prose-chat h1, .prose-chat h2, .prose-chat h3 { @apply mb-1 mt-3 font-semibold; }
+  .prose-chat a { @apply text-primary underline underline-offset-2; }
+  .prose-chat strong { @apply font-semibold; }
+}
