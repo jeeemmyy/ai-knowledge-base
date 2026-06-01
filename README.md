@@ -227,6 +227,13 @@ counting, splitting, overlap, and the pathological no-separator path).
 
 ---
 
+## Wak videos
+
+- **Code & App e walkthrough:** [Loom video](https://www.loom.com/share/dfa53d58afb3493082a6e2677d9dabb7)
+- **AI Assisted Coding, Scope, DB Schema and ERD:** [Loom video](https://www.loom.com/share/a28d0e7a4d15488fbb503427874da217)
+
+---
+
 ## Scripts
 
 | Command          | What it does                                           |
