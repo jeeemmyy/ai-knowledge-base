@@ -33,7 +33,7 @@ export default function LoginPage() {
     <Card className="shadow-lg">
       <CardHeader>
         <div className="mb-1 font-mono text-xs uppercase tracking-[0.2em] text-primary">Welcome back</div>
-        <CardTitle className="text-2xl">Sign in to Codex</CardTitle>
+        <CardTitle className="text-2xl">Sign in to DocBrain</CardTitle>
         <CardDescription>Your private knowledge base and AI assistant.</CardDescription>
       </CardHeader>
       <CardContent>

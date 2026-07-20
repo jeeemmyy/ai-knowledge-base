@@ -17,7 +17,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (loading || !session) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="animate-pulse font-serif text-2xl text-muted-foreground">Codex</div>
+        <div className="animate-pulse font-serif text-2xl text-muted-foreground">DocBrain</div>
       </div>
     );
   }

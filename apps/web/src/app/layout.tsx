@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Fraunces, Hanken_Grotesk, JetBrains_Mono } from 'next/font/google';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { SupabaseProvider } from '@/components/providers/supabase-provider';
+import { ServerWakeBanner } from '@/components/layout/server-wake-banner';
 import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
@@ -23,7 +24,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Codex — AI Knowledge Base',
+  title: 'DocBrain — AI Knowledge Base',
   description: 'Create documents and ask questions answered from your own knowledge.',
 };
 
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SupabaseProvider>
           <QueryProvider>
             <div className="relative z-10">{children}</div>
+            <ServerWakeBanner />
             <Toaster />
           </QueryProvider>
         </SupabaseProvider>

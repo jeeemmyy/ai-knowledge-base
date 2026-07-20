@@ -1,6 +1,7 @@
 'use client';
 import axios, { type AxiosInstance } from 'axios';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { requestStarted, requestSettled } from '@/lib/api/server-status';
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -19,8 +20,22 @@ api.interceptors.request.use(async (config) => {
   if (session?.access_token) {
     config.headers.Authorization = `Bearer ${session.access_token}`;
   }
+  requestStarted();
   return config;
 });
+
+// Cold-start tracking: any response (even an error status) proves the server
+// is awake; a network-level failure means it never answered.
+api.interceptors.response.use(
+  (response) => {
+    requestSettled(true);
+    return response;
+  },
+  (error) => {
+    requestSettled(axios.isAxiosError(error) && error.response !== undefined);
+    return Promise.reject(error);
+  },
+);
 
 /** Normalize API errors into a readable message for toasts. */
 export function apiErrorMessage(err: unknown, fallback = 'Something went wrong'): string {

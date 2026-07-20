@@ -17,7 +17,7 @@ export class HealthController {
     }
     return {
       status: db === 'ok' ? 'ok' : 'degraded',
-      service: 'ai-knowledge-base-api',
+      service: 'docbrain-api',
       db,
       timestamp: new Date().toISOString(),
     };

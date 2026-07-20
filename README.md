@@ -1,4 +1,4 @@
-# AI Knowledge Base
+# DocBrain
 
 A full-stack, AI-powered knowledge base. Users create and manage documents, then
 ask questions through a chat interface that retrieves relevant context (RAG) and
@@ -53,7 +53,7 @@ question about it. `GET http://localhost:3001/health` reports API + DB status.
 ## Repository layout
 
 ```
-ai-knowledge-base/
+docbrain/
 ├── apps/
 │   ├── api/                 NestJS backend
 │   │   └── src/

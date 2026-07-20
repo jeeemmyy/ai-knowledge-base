@@ -6,7 +6,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         aria-hidden
         className="pointer-events-none absolute -left-10 top-1/2 hidden -translate-y-1/2 select-none font-serif text-[18rem] font-semibold leading-none text-primary/[0.06] lg:block"
       >
-        Codex
+        DocBrain
       </div>
       <div className="w-full max-w-md animate-fade-in-up">{children}</div>
     </div>
