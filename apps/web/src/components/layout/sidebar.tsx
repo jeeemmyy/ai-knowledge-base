@@ -1,13 +1,14 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileText, MessagesSquare, Plus } from 'lucide-react';
+import { FileText, MessagesSquare, Plus, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 const nav = [
   { href: '/chat', label: 'Chat', icon: MessagesSquare },
   { href: '/documents', label: 'Documents', icon: FileText },
+  { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export function Sidebar() {

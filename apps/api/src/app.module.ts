@@ -5,7 +5,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { RagModule } from './modules/rag/rag.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { ApiKeysModule } from './modules/api-keys/api-keys.module';
 import { HealthController } from './health/health.controller';
+import { RootController } from './health/root.controller';
 
 /**
  * Root module. AiModule and SupabaseModule are @Global, so their providers are
@@ -16,10 +18,11 @@ import { HealthController } from './health/health.controller';
     SupabaseModule, // global: SupabaseService
     AiModule, // global: AiService (provider-agnostic)
     AuthModule,
+    ApiKeysModule, // global: ApiKeysService (used by SupabaseAuthGuard)
     RagModule,
     DocumentsModule,
     ChatModule,
   ],
-  controllers: [HealthController],
+  controllers: [HealthController, RootController],
 })
 export class AppModule {}

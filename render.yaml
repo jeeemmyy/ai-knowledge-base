@@ -43,9 +43,3 @@ services:
         sync: false
       - key: AI_EMBEDDING_DIMENSIONS
         sync: false
-      # Optional — only if using the X-API-Key auth path (e.g. from Bubble).
-      # Omit both to disable it.
-      - key: SERVICE_API_KEY
-        sync: false
-      - key: SERVICE_API_KEY_USER_ID
-        sync: false

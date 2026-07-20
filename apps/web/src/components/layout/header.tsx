@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { FileText, LogOut, Menu, MessagesSquare, Plus, X } from 'lucide-react';
+import { FileText, LogOut, Menu, MessagesSquare, Plus, Settings, X } from 'lucide-react';
 import { useSupabase } from '@/components/providers/supabase-provider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 const nav = [
   { href: '/chat', label: 'Chat', icon: MessagesSquare },
   { href: '/documents', label: 'Documents', icon: FileText },
+  { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export function Header() {

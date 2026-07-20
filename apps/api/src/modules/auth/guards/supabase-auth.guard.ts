@@ -4,38 +4,39 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { timingSafeEqual } from 'node:crypto';
 import type { Request } from 'express';
 import { SupabaseService } from '../../../common/supabase/supabase.service';
+import { ApiKeysService } from '../../api-keys/api-keys.service';
 
 /**
- * Validates the `Authorization: Bearer <supabase_access_token>` header and
- * attaches the authenticated user to the request. Controllers then use the
- * user id for ownership checks. RLS in the database is the second layer.
+ * Two ways in, one request contract:
  *
- * Optionally, when SERVICE_API_KEY and SERVICE_API_KEY_USER_ID are both set,
- * an `X-API-Key` header matching SERVICE_API_KEY authenticates as that fixed
- * user. Intended for server-to-server clients (e.g. a Bubble app) that cannot
- * run the Supabase browser auth flow. Disabled unless both vars are present.
+ * 1. `Authorization: Bearer <supabase_access_token>` — the web app's flow.
+ * 2. `X-API-Key: dbk_...` — per-user keys created in Settings -> API, for
+ *    server-to-server clients (e.g. a Bubble frontend). The key maps to its
+ *    owning user, so all ownership scoping works identically.
+ *
+ * Either way the authenticated user lands on req.user; controllers use the
+ * user id for ownership checks. RLS in the database is the second layer.
  */
 @Injectable()
 export class SupabaseAuthGuard implements CanActivate {
-  constructor(private readonly supabase: SupabaseService) {}
+  constructor(
+    private readonly supabase: SupabaseService,
+    private readonly apiKeys: ApiKeysService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<Request>();
 
-    const serviceKey = process.env.SERVICE_API_KEY;
-    const serviceUserId = process.env.SERVICE_API_KEY_USER_ID;
     const apiKeyHeader = req.headers['x-api-key'];
-    if (serviceKey && serviceUserId && typeof apiKeyHeader === 'string') {
-      const expected = Buffer.from(serviceKey);
-      const given = Buffer.from(apiKeyHeader);
-      if (expected.length === given.length && timingSafeEqual(expected, given)) {
-        req.user = { id: serviceUserId, email: null };
-        return true;
+    if (typeof apiKeyHeader === 'string' && apiKeyHeader.length > 0) {
+      const user = await this.apiKeys.resolveUser(apiKeyHeader.trim());
+      if (!user) {
+        throw new UnauthorizedException('Invalid API key');
       }
-      throw new UnauthorizedException('Invalid API key');
+      req.user = user;
+      return true;
     }
 
     const header = req.headers.authorization;

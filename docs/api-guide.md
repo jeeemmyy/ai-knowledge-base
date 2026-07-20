@@ -17,29 +17,20 @@ All request and response bodies are JSON (`Content-Type: application/json`).
 Every endpoint except `GET /health` requires authentication. Two methods are
 supported; each request uses one or the other.
 
-### Option A — Service API key (simplest; one shared knowledge base)
+### Option A — Personal API key (create one in the app)
 
-Best for prototyping or a single-tenant Bubble app. All requests act as **one**
-fixed user, so every Bubble user sees the same documents.
+Sign in to the web app and go to **Settings → API → Create key**. The key
+(`dbk_…`) is shown once — copy it immediately. It acts as your account: every
+request authenticated with it reads and writes *your* documents and chats.
+Revoke a key any time from the same screen.
 
-**Setup (one time):**
-
-1. Create a dedicated account for the service (sign up once through the web
-   app, or Supabase Dashboard → Authentication → Add user).
-2. Copy that user's UUID from Supabase Dashboard → Authentication → Users.
-3. In the API's `.env`, set:
-
-   ```env
-   SERVICE_API_KEY=<random secret — e.g. `openssl rand -hex 32`>
-   SERVICE_API_KEY_USER_ID=<that user's UUID>
-   ```
-
-4. Restart the API. If either var is unset, the feature is disabled entirely.
+Only a SHA-256 hash is stored server-side, and API keys cannot be used to
+create or revoke other keys (that always requires a logged-in session).
 
 **Usage:** send the key on every request:
 
 ```
-X-API-Key: <SERVICE_API_KEY>
+X-API-Key: dbk_...
 ```
 
 In Bubble's API Connector, add a **shared header** `X-API-Key` with the key as
