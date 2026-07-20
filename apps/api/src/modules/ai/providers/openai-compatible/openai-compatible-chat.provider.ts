@@ -1,6 +1,12 @@
 import { Logger } from '@nestjs/common';
 import OpenAI from 'openai';
-import type { ChatMessage, ChatOptions, ChatResponse, IChatProvider } from '@repo/shared';
+import type {
+  ChatMessage,
+  ChatOptions,
+  ChatResponse,
+  ChatStreamChunk,
+  IChatProvider,
+} from '@repo/shared';
 import type { AiChatConfig } from '../../../../config/ai.config';
 
 /**
@@ -46,6 +52,44 @@ export class OpenAICompatibleChatProvider implements IChatProvider {
       };
     } catch (err) {
       this.logger.error(`Chat completion failed (model=${model})`, err as Error);
+      throw err;
+    }
+  }
+
+  async *stream(
+    messages: ChatMessage[],
+    options?: ChatOptions,
+  ): AsyncIterable<ChatStreamChunk> {
+    const model = options?.model ?? this.config.model;
+    try {
+      const completion = await this.client.chat.completions.create({
+        model,
+        messages: messages.map((m) => ({ role: m.role, content: m.content })),
+        temperature: options?.temperature ?? 0.2,
+        max_tokens: options?.maxTokens,
+        stream: true,
+        stream_options: { include_usage: true },
+      });
+
+      for await (const part of completion) {
+        const delta = part.choices[0]?.delta?.content ?? '';
+        // The terminal chunk (with include_usage) has empty choices and usage.
+        if (part.usage) {
+          yield {
+            delta,
+            model: part.model ?? model,
+            usage: {
+              promptTokens: part.usage.prompt_tokens,
+              completionTokens: part.usage.completion_tokens,
+              totalTokens: part.usage.total_tokens,
+            },
+          };
+        } else if (delta) {
+          yield { delta };
+        }
+      }
+    } catch (err) {
+      this.logger.error(`Chat stream failed (model=${model})`, err as Error);
       throw err;
     }
   }

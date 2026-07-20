@@ -7,8 +7,10 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import type { Conversation, Message, SendMessageResult } from '@repo/shared';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
@@ -58,5 +60,32 @@ export class ChatController {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<SendMessageResult> {
     return this.chat.sendMessage(user.id, dto);
+  }
+
+  /**
+   * Streaming chat over Server-Sent Events. Each event is one JSON-encoded
+   * ChatStreamEvent in a `data:` frame. Uses the raw response (@Res) so tokens
+   * flush as they arrive; consumed by the web app via fetch + ReadableStream.
+   */
+  @Post('chat/stream')
+  async streamMessage(
+    @Body() dto: SendMessageDto,
+    @CurrentUser() user: AuthenticatedUser,
+    @Res() res: Response,
+  ): Promise<void> {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders?.();
+
+    try {
+      for await (const event of this.chat.streamMessage(user.id, dto)) {
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      }
+    } catch {
+      res.write(`data: ${JSON.stringify({ type: 'error', message: 'Stream failed' })}\n\n`);
+    } finally {
+      res.end();
+    }
   }
 }

@@ -3,6 +3,7 @@ import type {
   ChatMessage,
   ChatOptions,
   ChatResponse,
+  ChatStreamChunk,
   IChatProvider,
   IEmbeddingProvider,
 } from '@repo/shared';
@@ -26,6 +27,10 @@ export class AiService {
 
   chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResponse> {
     return this.chatProvider.chat(messages, options);
+  }
+
+  stream(messages: ChatMessage[], options?: ChatOptions): AsyncIterable<ChatStreamChunk> {
+    return this.chatProvider.stream(messages, options);
   }
 
   embed(input: string | string[]): Promise<number[][]> {

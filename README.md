@@ -15,7 +15,7 @@ source.
 | Frontend | Next.js 15 (App Router) · React 19 · Tailwind · shadcn-style UI |
 | Backend  | NestJS 11                                           |
 | Database | Supabase Cloud (Postgres + pgvector)                |
-| Auth     | Supabase Auth (email/password, JWT)                 |
+| Auth     | Supabase Auth (email/password + Google OAuth, JWT)  |
 | AI       | Provider-agnostic — any OpenAI-compatible endpoint  |
 
 ---
@@ -212,9 +212,6 @@ counting, splitting, overlap, and the pathological no-separator path).
 
 ## What I'd add next
 
-- **Streaming responses.** The `IChatProvider` contract is ready for a `stream()`
-  method; the UI already isolates the assistant bubble, so SSE / `ReadableStream`
-  wiring is the main work.
 - **File upload ingestion.** The schema already reserves `uploaded_files` and
   `documents.source_file_id`; add extraction (PDF/docx -> text) and reuse the
   existing chunk -> embed pipeline.

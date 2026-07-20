@@ -1,9 +1,14 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
+import ReactMarkdown from 'react-markdown';
 import { Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 import type { Message } from '@repo/shared';
-import { useMessages, useSendMessage } from '@/lib/hooks/use-chat';
+import { useMessages } from '@/lib/hooks/use-chat';
+import { chatApi } from '@/lib/api/chat';
+import { apiErrorMessage } from '@/lib/api/client';
 import { MessageBubble } from './message-bubble';
 import { ChatInput } from './chat-input';
 
@@ -13,29 +18,80 @@ const SUGGESTIONS = [
   'What did I write about onboarding?',
 ];
 
+interface StreamState {
+  userText: string;
+  assistantText: string;
+}
+
 export function ChatThread({ conversationId }: { conversationId: string | null }) {
   const router = useRouter();
+  const qc = useQueryClient();
   const { data: messages, isLoading } = useMessages(conversationId);
-  const send = useSendMessage();
+  const [stream, setStream] = useState<StreamState | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages, send.isPending]);
+  }, [messages, stream]);
 
-  function handleSend(text: string) {
-    send.mutate(
-      { conversationId: conversationId ?? undefined, message: text },
-      {
-        onSuccess: (result) => {
-          // First message in a brand-new chat → move to its permalink.
-          if (!conversationId) router.replace(`/chat/${result.conversationId}`);
+  async function handleSend(text: string) {
+    if (stream) return; // already streaming
+    setStream({ userText: text, assistantText: '' });
+
+    let convId = conversationId;
+    let userMessage: Message | null = null;
+
+    try {
+      await chatApi.stream(
+        { conversationId: conversationId ?? undefined, message: text },
+        (event) => {
+          if (!mounted.current) return;
+          switch (event.type) {
+            case 'meta':
+              convId = event.conversationId;
+              userMessage = event.userMessage;
+              break;
+            case 'delta':
+              setStream((s) => (s ? { ...s, assistantText: s.assistantText + event.text } : s));
+              break;
+            case 'done':
+              if (convId && userMessage) {
+                // Seed the cache so the persisted pair renders without a refetch
+                // flicker (and is already present after navigation).
+                qc.setQueryData<Message[]>(['messages', convId], (old) => [
+                  ...(old ?? []),
+                  userMessage as Message,
+                  event.assistantMessage,
+                ]);
+              }
+              void qc.invalidateQueries({ queryKey: ['conversations'] });
+              setStream(null);
+              if (!conversationId && convId) router.replace(`/chat/${convId}`);
+              break;
+            case 'error':
+              toast.error(event.message);
+              setStream(null);
+              break;
+          }
         },
-      },
-    );
+      );
+    } catch (err) {
+      if (mounted.current) {
+        toast.error(apiErrorMessage(err, 'Failed to send message'));
+        setStream(null);
+      }
+    }
   }
 
-  const isEmpty = !conversationId || (messages && messages.length === 0);
+  const showEmpty = (!conversationId || (messages && messages.length === 0)) && !stream;
 
   return (
     <div className="flex h-full flex-col">
@@ -45,7 +101,7 @@ export function ChatThread({ conversationId }: { conversationId: string | null }
             <p className="text-center text-sm text-muted-foreground">Loading conversation…</p>
           )}
 
-          {isEmpty && !send.isPending && (
+          {showEmpty && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 <Sparkles className="h-7 w-7" />
@@ -68,19 +124,38 @@ export function ChatThread({ conversationId }: { conversationId: string | null }
 
           <div className="space-y-4">
             {messages?.map((m: Message) => <MessageBubble key={m.id} message={m} />)}
-            {send.isPending && (
-              <div className="flex justify-start">
-                <div className="flex items-center gap-2 rounded-2xl rounded-bl-md border border-border bg-card px-4 py-3">
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]" />
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]" />
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-primary" />
+
+            {stream && (
+              <>
+                {/* Optimistic user bubble (persisted copy replaces it on done). */}
+                <div className="flex justify-end">
+                  <div className="max-w-[85%] rounded-2xl rounded-br-md bg-primary px-4 py-3 text-primary-foreground">
+                    <p className="whitespace-pre-wrap text-[15px] leading-relaxed">{stream.userText}</p>
+                  </div>
                 </div>
-              </div>
+                {/* Streaming assistant bubble. */}
+                <div className="flex justify-start">
+                  <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-border bg-card px-4 py-3">
+                    {stream.assistantText ? (
+                      <div className="prose-chat">
+                        <ReactMarkdown>{stream.assistantText}</ReactMarkdown>
+                        <span className="ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 animate-pulse bg-primary align-middle" />
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]" />
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]" />
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-primary" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
       </div>
-      <ChatInput onSend={handleSend} disabled={send.isPending} />
+      <ChatInput onSend={handleSend} disabled={stream !== null} />
     </div>
   );
 }

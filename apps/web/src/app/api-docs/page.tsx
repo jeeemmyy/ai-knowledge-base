@@ -97,6 +97,15 @@ const sections: { heading: string; blurb?: string; endpoints: Endpoint[] }[] = [
         body: { message: 'What did I write about onboarding?' },
       },
       {
+        method: 'POST',
+        path: '/chat/stream',
+        title: 'Ask a question (streaming)',
+        description:
+          'Same inputs as /chat, but streams the answer token-by-token as Server-Sent Events (one JSON ChatStreamEvent per data: frame: meta → delta… → done). The web app uses this; add `-N` to curl to see tokens arrive live.',
+        auth: 'api-key',
+        body: { message: 'What did I write about onboarding?' },
+      },
+      {
         method: 'GET',
         path: '/conversations',
         title: 'List conversations',

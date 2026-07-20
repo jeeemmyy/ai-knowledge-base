@@ -39,11 +39,24 @@ export interface ChatResponse {
 }
 
 /**
+ * One incremental piece of a streamed chat completion. `delta` is the new text
+ * (empty on the terminal chunk); `usage`/`model` appear on the final chunk when
+ * the provider reports them.
+ */
+export interface ChatStreamChunk {
+  delta: string;
+  usage?: TokenUsage;
+  model?: string;
+}
+
+/**
  * Chat provider contract. Implemented per provider family.
  * Any OpenAI-compatible endpoint is one implementation.
  */
 export interface IChatProvider {
   chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResponse>;
+  /** Stream the completion token-by-token. Yields text deltas, then usage. */
+  stream(messages: ChatMessage[], options?: ChatOptions): AsyncIterable<ChatStreamChunk>;
 }
 
 /**
