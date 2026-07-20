@@ -25,8 +25,14 @@ async function bootstrap() {
 
   app.useGlobalFilters(new GlobalExceptionFilter());
 
+  // WEB_ORIGIN accepts a comma-separated list; trailing slashes are tolerated
+  // (a browser Origin never has one, so they would otherwise never match).
+  const allowedOrigins = (process.env.WEB_ORIGIN ?? 'http://localhost:3000')
+    .split(',')
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
   app.enableCors({
-    origin: process.env.WEB_ORIGIN ?? 'http://localhost:3000',
+    origin: allowedOrigins,
     credentials: true,
   });
 
