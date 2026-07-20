@@ -26,8 +26,17 @@ export class DocumentsService {
       content: dto.content,
       tags: dto.tags ?? [],
     });
-    // Chunk + embed + store. Atomic swap handled inside RagService.
-    await this.rag.indexDocument(doc.id, doc.content);
+    try {
+      // Chunk + embed + store. Atomic chunk swap handled inside RagService.
+      await this.rag.indexDocument(doc.id, doc.content);
+    } catch (err) {
+      // Indexing failed (e.g. the embedding provider is down or out of quota).
+      // Roll back the document row so create is all-or-nothing: otherwise we
+      // leave an unsearchable orphan that returns 500 to the client yet still
+      // appears on reload — which leads users to retry and create duplicates.
+      await this.repo.delete(doc.id, userId).catch(() => undefined);
+      throw err;
+    }
     return doc;
   }
 
