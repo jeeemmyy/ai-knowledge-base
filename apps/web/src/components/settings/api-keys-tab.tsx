@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { Copy, KeyRound, Plus, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { BookOpen, Copy, KeyRound, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ApiKey } from '@repo/shared';
 import { useApiKeys, useCreateApiKey, useRevokeApiKey } from '@/lib/hooks/use-api-keys';
@@ -60,6 +61,14 @@ export function ApiKeysTab() {
             Call the DocBrain API from external apps (e.g. Bubble) with an{' '}
             <code className="font-mono text-xs">X-API-Key</code> header. Keys act as your account.
           </CardDescription>
+          <Link
+            href="/api-docs"
+            target="_blank"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            <BookOpen className="h-4 w-4" />
+            View API documentation
+          </Link>
         </div>
         <Button className="gap-2" onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4" />
