@@ -6,6 +6,9 @@ import { RagModule } from './modules/rag/rag.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { ApiKeysModule } from './modules/api-keys/api-keys.module';
+import { SettingsModule } from './modules/settings/settings.module';
+import { EmailModule } from './modules/email/email.module';
+import { AccountModule } from './modules/account/account.module';
 import { HealthController } from './health/health.controller';
 import { RootController } from './health/root.controller';
 
@@ -17,8 +20,11 @@ import { RootController } from './health/root.controller';
   imports: [
     SupabaseModule, // global: SupabaseService
     AiModule, // global: AiService (provider-agnostic)
+    SettingsModule, // global: AppSettingsRepository
+    EmailModule, // global: EmailService (SendGrid)
     AuthModule,
     ApiKeysModule, // global: ApiKeysService (used by SupabaseAuthGuard)
+    AccountModule, // /auth/me, verification, password reset, /admin settings
     RagModule,
     DocumentsModule,
     ChatModule,

@@ -1,4 +1,5 @@
 export * from './types/ai.types';
+export * from './types/account.types';
 export * from './types/api-key.types';
 export * from './types/document.types';
 export * from './types/chat.types';

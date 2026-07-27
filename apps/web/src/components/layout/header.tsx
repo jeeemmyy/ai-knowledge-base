@@ -2,12 +2,13 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { FileText, LogOut, Menu, MessagesSquare, Plus, Settings, X } from 'lucide-react';
+import { FileText, LogOut, Menu, MessagesSquare, Plus, Settings, Shield, X } from 'lucide-react';
 import { useSupabase } from '@/components/providers/supabase-provider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useMe } from '@/lib/hooks/use-me';
 
-const nav = [
+const baseNav = [
   { href: '/chat', label: 'Chat', icon: MessagesSquare },
   { href: '/documents', label: 'Documents', icon: FileText },
   { href: '/settings', label: 'Settings', icon: Settings },
@@ -15,9 +16,13 @@ const nav = [
 
 export function Header() {
   const { user, supabase } = useSupabase();
+  const { data: me } = useMe();
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const nav = me?.isAdmin
+    ? [...baseNav, { href: '/admin', label: 'Admin', icon: Shield }]
+    : baseNav;
 
   // Close the mobile menu after navigating.
   useEffect(() => setMenuOpen(false), [pathname]);

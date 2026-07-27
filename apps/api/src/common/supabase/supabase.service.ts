@@ -33,6 +33,10 @@ export class SupabaseService {
       this.logger.debug(`Token validation failed: ${error?.message ?? 'no user'}`);
       return null;
     }
-    return { id: data.user.id, email: data.user.email ?? null };
+    return {
+      id: data.user.id,
+      email: data.user.email ?? null,
+      provider: (data.user.app_metadata?.provider as string | undefined) ?? 'email',
+    };
   }
 }

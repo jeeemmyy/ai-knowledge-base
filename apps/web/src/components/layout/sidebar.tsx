@@ -1,11 +1,12 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileText, MessagesSquare, Plus, Settings } from 'lucide-react';
+import { FileText, MessagesSquare, Plus, Settings, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useMe } from '@/lib/hooks/use-me';
 
-const nav = [
+const baseNav = [
   { href: '/chat', label: 'Chat', icon: MessagesSquare },
   { href: '/documents', label: 'Documents', icon: FileText },
   { href: '/settings', label: 'Settings', icon: Settings },
@@ -13,6 +14,10 @@ const nav = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: me } = useMe();
+  const nav = me?.isAdmin
+    ? [...baseNav, { href: '/admin', label: 'Admin', icon: Shield }]
+    : baseNav;
   return (
     <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-card/60 md:flex">
       <div className="flex h-16 items-center gap-2 border-b border-border px-6">
