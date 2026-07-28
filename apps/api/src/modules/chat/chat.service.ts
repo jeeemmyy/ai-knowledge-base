@@ -154,7 +154,15 @@ export class ChatService {
       );
     } catch (err) {
       this.logger.error('Chat stream failed', err as Error);
-      yield { type: 'error', message: 'The AI provider is currently unavailable. Please try again.' };
+      // Include a concise provider reason (model/key/endpoint errors are not
+      // secrets) so config problems are diagnosable instead of opaque.
+      const detail = (err as Error)?.message?.replace(/\s+/g, ' ').slice(0, 200);
+      yield {
+        type: 'error',
+        message: detail
+          ? `The AI provider returned an error: ${detail}`
+          : 'The AI provider is currently unavailable. Please try again.',
+      };
       return;
     }
 

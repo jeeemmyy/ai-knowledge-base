@@ -179,6 +179,12 @@ export class AccountService {
     if (!(await this.email.isConfigured())) {
       throw new BadRequestException('Configure and save email (Brevo) settings first.');
     }
-    await this.email.sendTest(to);
+    try {
+      await this.email.sendTest(to);
+    } catch (err) {
+      // Surface the provider's real reason (e.g. unverified sender, IP block)
+      // instead of a generic 500 so the admin can fix it.
+      throw new BadRequestException((err as Error).message);
+    }
   }
 }

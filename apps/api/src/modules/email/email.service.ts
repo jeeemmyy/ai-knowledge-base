@@ -58,7 +58,13 @@ export class EmailService {
     if (!res.ok) {
       const body = await res.text();
       this.logger.error(`Brevo send failed (${res.status}): ${body.slice(0, 300)}`);
-      throw new Error(`Email provider responded ${res.status}`);
+      let detail = body.slice(0, 300);
+      try {
+        detail = (JSON.parse(body) as { message?: string }).message ?? detail;
+      } catch {
+        // non-JSON body — keep the raw text
+      }
+      throw new Error(`Email provider error (${res.status}): ${detail}`);
     }
   }
 
