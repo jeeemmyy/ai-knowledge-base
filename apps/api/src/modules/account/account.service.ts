@@ -2,30 +2,21 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { randomInt } from 'node:crypto';
 import type {
   AdminSettings,
+  AdminUser,
   MeResponse,
   StartVerificationResult,
   UpdateAdminSettingsInput,
 } from '@repo/shared';
 import { SupabaseService } from '../../common/supabase/supabase.service';
+import { isAdminEmail } from '../../common/admin';
 import { AppSettingsRepository, SETTINGS_KEYS } from '../settings/app-settings.repository';
 import { EmailService } from '../email/email.service';
+import { LimitsService } from '../limits/limits.service';
 import { ProfilesRepository } from './profiles.repository';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 
 const CODE_TTL_MS = 15 * 60 * 1000;
 const RESEND_THROTTLE_MS = 30 * 1000;
-
-/** Admin emails from ADMIN_EMAILS (comma-separated), lower-cased. */
-function adminEmails(): string[] {
-  return (process.env.ADMIN_EMAILS ?? '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-export function isAdminEmail(email: string | null | undefined): boolean {
-  return !!email && adminEmails().includes(email.toLowerCase());
-}
 
 function sixDigitCode(): string {
   return randomInt(0, 1_000_000).toString().padStart(6, '0');
@@ -44,6 +35,7 @@ export class AccountService {
     private readonly profiles: ProfilesRepository,
     private readonly email: EmailService,
     private readonly settings: AppSettingsRepository,
+    private readonly limits: LimitsService,
   ) {}
 
   /** Verified-by-default for OAuth users (Google already verified the email). */
@@ -61,7 +53,19 @@ export class AccountService {
       email: user.email,
       emailVerified,
       isAdmin: isAdminEmail(user.email),
+      limits: await this.limits.getStatus(user),
     };
+  }
+
+  // --- Admin user management -------------------------------------------------
+
+  listUsers(): Promise<AdminUser[]> {
+    return this.profiles.listAll();
+  }
+
+  async setUserUnlimited(userId: string, unlimited: boolean): Promise<AdminUser[]> {
+    await this.profiles.setUnlimited(userId, unlimited);
+    return this.listUsers();
   }
 
   async startVerification(user: AuthenticatedUser): Promise<StartVerificationResult> {

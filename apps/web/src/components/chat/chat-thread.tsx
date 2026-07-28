@@ -7,6 +7,7 @@ import { Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Message } from '@repo/shared';
 import { useMessages } from '@/lib/hooks/use-chat';
+import { useMe } from '@/lib/hooks/use-me';
 import { chatApi } from '@/lib/api/chat';
 import { apiErrorMessage } from '@/lib/api/client';
 import { MessageBubble } from './message-bubble';
@@ -27,9 +28,14 @@ export function ChatThread({ conversationId }: { conversationId: string | null }
   const router = useRouter();
   const qc = useQueryClient();
   const { data: messages, isLoading } = useMessages(conversationId);
+  const { data: me } = useMe();
   const [stream, setStream] = useState<StreamState | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mounted = useRef(true);
+
+  const limits = me?.limits;
+  const atMessageLimit =
+    !!limits && !limits.unlimited && limits.messagesUsed >= limits.messageLimit;
 
   useEffect(() => {
     mounted.current = true;
@@ -44,6 +50,12 @@ export function ChatThread({ conversationId }: { conversationId: string | null }
 
   async function handleSend(text: string) {
     if (stream) return; // already streaming
+    if (atMessageLimit) {
+      toast.error(
+        `You've reached the free limit of ${limits!.messageLimit} messages. Ask an admin to unlock unlimited access.`,
+      );
+      return;
+    }
     setStream({ userText: text, assistantText: '' });
 
     let convId = conversationId;
@@ -73,6 +85,7 @@ export function ChatThread({ conversationId }: { conversationId: string | null }
                 ]);
               }
               void qc.invalidateQueries({ queryKey: ['conversations'] });
+              void qc.invalidateQueries({ queryKey: ['me'] }); // message count changed
               setStream(null);
               if (!conversationId && convId) router.replace(`/chat/${convId}`);
               break;
@@ -155,7 +168,12 @@ export function ChatThread({ conversationId }: { conversationId: string | null }
           </div>
         </div>
       </div>
-      <ChatInput onSend={handleSend} disabled={stream !== null} />
+      {atMessageLimit && (
+        <p className="border-t border-border bg-secondary/40 px-4 py-2 text-center text-xs text-muted-foreground">
+          You’ve used all {limits!.messageLimit} free messages. Ask an admin to unlock unlimited access.
+        </p>
+      )}
+      <ChatInput onSend={handleSend} disabled={stream !== null || atMessageLimit} />
     </div>
   );
 }

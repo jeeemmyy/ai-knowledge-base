@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { FileText, Plus } from 'lucide-react';
 import type { Document } from '@repo/shared';
 import { useDocuments, useDeleteDocument } from '@/lib/hooks/use-documents';
+import { useMe } from '@/lib/hooks/use-me';
 import { DocumentCard } from '@/components/documents/document-card';
 import { DeleteDocumentDialog } from '@/components/documents/delete-document-dialog';
 import { Button } from '@/components/ui/button';
@@ -11,8 +12,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DocumentsPage() {
   const { data: docs, isLoading, isError } = useDocuments();
+  const { data: me } = useMe();
   const del = useDeleteDocument();
   const [target, setTarget] = useState<Document | null>(null);
+
+  const limits = me?.limits;
+  const atLimit = !!limits && !limits.unlimited && limits.documentsUsed >= limits.documentLimit;
 
   return (
     <div className="h-full overflow-y-auto">
@@ -21,11 +26,29 @@ export default function DocumentsPage() {
           <div>
             <div className="mb-1 font-mono text-xs uppercase tracking-[0.2em] text-primary">Knowledge base</div>
             <h1 className="font-serif text-3xl font-semibold">Documents</h1>
+            {limits && !limits.unlimited && (
+              <p className="mt-1 text-sm text-muted-foreground">
+                {limits.documentsUsed} / {limits.documentLimit} documents used (lifetime)
+              </p>
+            )}
           </div>
-          <Button asChild className="gap-2">
-            <Link href="/documents/new"><Plus className="h-4 w-4" />New document</Link>
-          </Button>
+          {atLimit ? (
+            <Button className="gap-2" disabled title="Free document limit reached">
+              <Plus className="h-4 w-4" />New document
+            </Button>
+          ) : (
+            <Button asChild className="gap-2">
+              <Link href="/documents/new"><Plus className="h-4 w-4" />New document</Link>
+            </Button>
+          )}
         </div>
+
+        {atLimit && (
+          <p className="mb-6 rounded-lg border border-border bg-secondary/60 p-3 text-sm text-muted-foreground">
+            You’ve reached the free limit of {limits!.documentLimit} documents. Ask an admin to
+            unlock unlimited access.
+          </p>
+        )}
 
         {isLoading && (
           <div className="grid gap-4 sm:grid-cols-2">

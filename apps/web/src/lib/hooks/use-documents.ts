@@ -21,6 +21,7 @@ export function useCreateDocument() {
     mutationFn: (input: CreateDocumentInput) => documentsApi.create(input),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: KEY });
+      void qc.invalidateQueries({ queryKey: ['me'] }); // usage count changed
       toast.success('Document created and indexed');
     },
     onError: (e) => toast.error(apiErrorMessage(e, 'Failed to create document')),

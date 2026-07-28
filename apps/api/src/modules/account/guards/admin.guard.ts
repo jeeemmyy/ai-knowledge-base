@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import type { Request } from 'express';
-import { isAdminEmail } from '../account.service';
+import { isAdminEmail } from '../../../common/admin';
 
 /**
  * Allows only users whose email is listed in ADMIN_EMAILS. Runs after

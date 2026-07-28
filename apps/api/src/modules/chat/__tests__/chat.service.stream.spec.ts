@@ -44,6 +44,10 @@ describe('ChatService.streamMessage', () => {
       };
     }
     const ai = { stream: jest.fn(() => fakeStream()) };
+    const limits = {
+      assertCanSendMessage: jest.fn(async () => undefined),
+      incrementMessages: jest.fn(async () => undefined),
+    };
 
     const service = new ChatService(
       conversations as never,
@@ -52,15 +56,18 @@ describe('ChatService.streamMessage', () => {
       prompt as never,
       rag as never,
       ai as never,
+      limits as never,
     );
-    return { service, conversations, messages, usage, ai };
+    return { service, conversations, messages, usage, ai, limits };
   }
+
+  const user = { id: 'user1', email: 'user1@example.com', provider: 'email' };
 
   it('emits meta -> deltas -> done and persists the full answer', async () => {
     const { service, messages, usage } = build();
 
     const events = [];
-    for await (const e of service.streamMessage('user1', { message: 'hi' })) {
+    for await (const e of service.streamMessage(user as never, { message: 'hi' })) {
       events.push(e);
     }
 
@@ -101,7 +108,7 @@ describe('ChatService.streamMessage', () => {
     });
 
     const events = [];
-    for await (const e of service.streamMessage('user1', { message: 'hi' })) {
+    for await (const e of service.streamMessage(user as never, { message: 'hi' })) {
       events.push(e);
     }
 

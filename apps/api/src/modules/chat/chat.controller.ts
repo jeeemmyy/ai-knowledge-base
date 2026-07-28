@@ -59,7 +59,7 @@ export class ChatController {
     @Body() dto: SendMessageDto,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<SendMessageResult> {
-    return this.chat.sendMessage(user.id, dto);
+    return this.chat.sendMessage(user, dto);
   }
 
   /**
@@ -79,7 +79,7 @@ export class ChatController {
     res.flushHeaders?.();
 
     try {
-      for await (const event of this.chat.streamMessage(user.id, dto)) {
+      for await (const event of this.chat.streamMessage(user, dto)) {
         res.write(`data: ${JSON.stringify(event)}\n\n`);
       }
     } catch {

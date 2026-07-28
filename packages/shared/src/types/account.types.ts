@@ -1,9 +1,30 @@
+/** Per-user usage caps (removed when unlimited). */
+export interface UsageLimits {
+  unlimited: boolean;
+  documentsUsed: number;
+  documentLimit: number;
+  messagesUsed: number;
+  messageLimit: number;
+}
+
 /** The current user's account state (GET /auth/me). */
 export interface MeResponse {
   id: string;
   email: string | null;
   emailVerified: boolean;
   isAdmin: boolean;
+  limits: UsageLimits;
+}
+
+/** A user row in the admin Users table (GET /admin/users). */
+export interface AdminUser {
+  userId: string;
+  email: string | null;
+  emailVerified: boolean;
+  unlimited: boolean;
+  documentsUsed: number;
+  messagesUsed: number;
+  createdAt: string;
 }
 
 /** Result of starting email verification (POST /auth/verification/start). */

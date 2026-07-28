@@ -41,7 +41,7 @@ export class DocumentsController {
     @Body() dto: CreateDocumentDto,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<Document> {
-    return this.documents.create(user.id, dto);
+    return this.documents.create(user, dto);
   }
 
   @Patch(':id')

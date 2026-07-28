@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import type { AdminUser } from '@repo/shared';
 import { SupabaseService } from '../../common/supabase/supabase.service';
 
 export interface UserProfile {
@@ -106,4 +107,43 @@ export class ProfilesRepository {
   clearResetCode(userId: string): Promise<void> {
     return this.patch(userId, { reset_code: null, reset_expires_at: null });
   }
+
+  // --- Admin user management -------------------------------------------------
+
+  async listAll(limit = 200): Promise<AdminUser[]> {
+    const { data, error } = await this.db
+      .select('user_id, email, email_verified, unlimited, documents_created, messages_sent, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw new Error(`profile listAll failed: ${error.message}`);
+    return (data as AdminUserRow[]).map((r) => ({
+      userId: r.user_id,
+      email: r.email,
+      emailVerified: r.email_verified,
+      unlimited: r.unlimited,
+      documentsUsed: r.documents_created,
+      messagesUsed: r.messages_sent,
+      createdAt: r.created_at,
+    }));
+  }
+
+  async setUnlimited(userId: string, unlimited: boolean): Promise<void> {
+    const { data, error } = await this.db
+      .update({ unlimited, updated_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .select('user_id')
+      .maybeSingle();
+    if (error) throw new Error(`profile setUnlimited failed: ${error.message}`);
+    if (!data) throw new NotFoundException('User not found');
+  }
+}
+
+interface AdminUserRow {
+  user_id: string;
+  email: string | null;
+  email_verified: boolean;
+  unlimited: boolean;
+  documents_created: number;
+  messages_sent: number;
+  created_at: string;
 }

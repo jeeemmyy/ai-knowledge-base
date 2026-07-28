@@ -2,14 +2,17 @@ import { Injectable } from '@nestjs/common';
 import type { Document } from '@repo/shared';
 import { DocumentsRepository } from './documents.repository';
 import { RagService } from '../rag/rag.service';
+import { LimitsService } from '../limits/limits.service';
 import type { CreateDocumentDto } from './dto/create-document.dto';
 import type { UpdateDocumentDto } from './dto/update-document.dto';
+import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 
 @Injectable()
 export class DocumentsService {
   constructor(
     private readonly repo: DocumentsRepository,
     private readonly rag: RagService,
+    private readonly limits: LimitsService,
   ) {}
 
   list(userId: string): Promise<Document[]> {
@@ -20,8 +23,11 @@ export class DocumentsService {
     return this.repo.findByIdForUser(id, userId);
   }
 
-  async create(userId: string, dto: CreateDocumentDto): Promise<Document> {
-    const doc = await this.repo.create(userId, {
+  async create(user: AuthenticatedUser, dto: CreateDocumentDto): Promise<Document> {
+    // Enforce the free-tier document cap before doing any work.
+    await this.limits.assertCanCreateDocument(user);
+
+    const doc = await this.repo.create(user.id, {
       title: dto.title,
       content: dto.content,
       tags: dto.tags ?? [],
@@ -34,9 +40,11 @@ export class DocumentsService {
       // Roll back the document row so create is all-or-nothing: otherwise we
       // leave an unsearchable orphan that returns 500 to the client yet still
       // appears on reload — which leads users to retry and create duplicates.
-      await this.repo.delete(doc.id, userId).catch(() => undefined);
+      await this.repo.delete(doc.id, user.id).catch(() => undefined);
       throw err;
     }
+    // Count only successfully-indexed documents against the lifetime cap.
+    await this.limits.incrementDocuments(user.id);
     return doc;
   }
 

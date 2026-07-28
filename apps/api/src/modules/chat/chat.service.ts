@@ -8,6 +8,8 @@ import { PromptBuilderService } from './prompt-builder.service';
 import { RagService } from '../rag/rag.service';
 import { ChunksRepository } from '../rag/chunks.repository';
 import { AiService } from '../ai/ai.service';
+import { LimitsService } from '../limits/limits.service';
+import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 
 const HISTORY_LIMIT = 10; // last N messages sent to the model (CH-04)
 const TOP_K = 5;
@@ -23,6 +25,7 @@ export class ChatService {
     private readonly prompt: PromptBuilderService,
     private readonly rag: RagService,
     private readonly ai: AiService,
+    private readonly limits: LimitsService,
   ) {}
 
   listConversations(userId: string): Promise<Conversation[]> {
@@ -52,7 +55,12 @@ export class ChatService {
    *   6. persist the assistant message WITH its sources (for citations)
    *   7. log token usage (best-effort)
    */
-  async sendMessage(userId: string, input: { conversationId?: string; message: string }): Promise<SendMessageResult> {
+  async sendMessage(
+    user: AuthenticatedUser,
+    input: { conversationId?: string; message: string },
+  ): Promise<SendMessageResult> {
+    await this.limits.assertCanSendMessage(user);
+    const userId = user.id;
     const conversation = input.conversationId
       ? await this.conversations.getForUser(input.conversationId, userId)
       : await this.conversations.create(userId, truncate(input.message, 60));
@@ -76,6 +84,7 @@ export class ChatService {
     );
 
     await this.conversations.touch(conversation.id);
+    await this.limits.incrementMessages(userId);
     await this.usage.log({
       userId,
       conversationId: conversation.id,
@@ -95,9 +104,18 @@ export class ChatService {
    * throwing, so the client always gets a clean end to the stream.
    */
   async *streamMessage(
-    userId: string,
+    user: AuthenticatedUser,
     input: { conversationId?: string; message: string },
   ): AsyncGenerator<ChatStreamEvent> {
+    try {
+      await this.limits.assertCanSendMessage(user);
+    } catch (err) {
+      // Surface the limit message cleanly instead of an abrupt disconnect.
+      yield { type: 'error', message: (err as Error).message };
+      return;
+    }
+
+    const userId = user.id;
     const conversation = input.conversationId
       ? await this.conversations.getForUser(input.conversationId, userId)
       : await this.conversations.create(userId, truncate(input.message, 60));
@@ -141,6 +159,7 @@ export class ChatService {
     }
 
     await this.conversations.touch(conversation.id);
+    await this.limits.incrementMessages(userId);
     await this.usage.log({
       userId,
       conversationId: conversation.id,

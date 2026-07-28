@@ -8,6 +8,7 @@ import { ChatModule } from './modules/chat/chat.module';
 import { ApiKeysModule } from './modules/api-keys/api-keys.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { EmailModule } from './modules/email/email.module';
+import { LimitsModule } from './modules/limits/limits.module';
 import { AccountModule } from './modules/account/account.module';
 import { HealthController } from './health/health.controller';
 import { RootController } from './health/root.controller';
@@ -22,6 +23,7 @@ import { RootController } from './health/root.controller';
     AiModule, // global: AiService (provider-agnostic)
     SettingsModule, // global: AppSettingsRepository
     EmailModule, // global: EmailService (SendGrid)
+    LimitsModule, // global: LimitsService (per-user usage caps)
     AuthModule,
     ApiKeysModule, // global: ApiKeysService (used by SupabaseAuthGuard)
     AccountModule, // /auth/me, verification, password reset, /admin settings

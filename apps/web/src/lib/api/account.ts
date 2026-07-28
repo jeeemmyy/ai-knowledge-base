@@ -1,6 +1,7 @@
 'use client';
 import type {
   AdminSettings,
+  AdminUser,
   MeResponse,
   StartVerificationResult,
   UpdateAdminSettingsInput,
@@ -40,5 +41,13 @@ export const accountApi = {
   },
   async sendTestEmail(to: string): Promise<void> {
     await api.post('/admin/settings/test', { to });
+  },
+  async listUsers(): Promise<AdminUser[]> {
+    const { data } = await api.get<AdminUser[]>('/admin/users');
+    return data;
+  },
+  async setUserUnlimited(userId: string, unlimited: boolean): Promise<AdminUser[]> {
+    const { data } = await api.patch<AdminUser[]>(`/admin/users/${userId}`, { unlimited });
+    return data;
   },
 };

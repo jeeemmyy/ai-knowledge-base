@@ -36,14 +36,24 @@ function build() {
   const settings = { getMany: jest.fn(async () => ({})) };
   const updateUserById = jest.fn(async () => ({ error: null }));
   const supabase = { admin: { auth: { admin: { updateUserById } } } };
+  const limits = {
+    getStatus: jest.fn(async () => ({
+      unlimited: false,
+      documentsUsed: 0,
+      documentLimit: 5,
+      messagesUsed: 0,
+      messageLimit: 10,
+    })),
+  };
 
   const service = new AccountService(
     supabase as never,
     profiles as never,
     email as never,
     settings as never,
+    limits as never,
   );
-  return { service, profiles, email, updateUserById };
+  return { service, profiles, email, updateUserById, limits };
 }
 
 const user = { id: 'u1', email: 'user@example.com', provider: 'email' };
