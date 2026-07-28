@@ -37,7 +37,7 @@ export function ServerWakeBanner() {
       <div className="flex items-center gap-2.5 rounded-full border bg-card px-4 py-2 text-sm text-card-foreground shadow-md">
         <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden />
         <span>
-          Waking up the server — free hosting sleeps when idle. This can take up
+          Waking up the server — efficient hosting sleeps when idle. This can take up
           to a minute.
         </span>
       </div>
