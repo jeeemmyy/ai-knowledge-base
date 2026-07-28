@@ -4,7 +4,7 @@ export class UpdateAdminSettingsDto {
   @IsOptional()
   @IsString()
   @MaxLength(500)
-  sendgridApiKey?: string;
+  apiKey?: string;
 
   @IsOptional()
   @IsEmail()

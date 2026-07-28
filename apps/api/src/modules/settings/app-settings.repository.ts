@@ -3,9 +3,9 @@ import { SupabaseService } from '../../common/supabase/supabase.service';
 
 /** Known keys in the app_settings KV table. */
 export const SETTINGS_KEYS = {
-  sendgridApiKey: 'sendgrid_api_key',
-  sendgridFromEmail: 'sendgrid_from_email',
-  sendgridFromName: 'sendgrid_from_name',
+  emailApiKey: 'email_api_key',
+  emailFromEmail: 'email_from_email',
+  emailFromName: 'email_from_name',
 } as const;
 
 @Injectable()

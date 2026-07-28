@@ -22,7 +22,7 @@ import { RootController } from './health/root.controller';
     SupabaseModule, // global: SupabaseService
     AiModule, // global: AiService (provider-agnostic)
     SettingsModule, // global: AppSettingsRepository
-    EmailModule, // global: EmailService (SendGrid)
+    EmailModule, // global: EmailService (Brevo)
     LimitsModule, // global: LimitsService (per-user usage caps)
     AuthModule,
     ApiKeysModule, // global: ApiKeysService (used by SupabaseAuthGuard)

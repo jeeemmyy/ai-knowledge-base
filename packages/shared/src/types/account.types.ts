@@ -36,15 +36,15 @@ export interface StartVerificationResult {
   message?: string;
 }
 
-/** Admin view of SendGrid settings — never exposes the raw API key. */
+/** Admin view of the email (Brevo) settings — never exposes the raw API key. */
 export interface AdminSettings {
-  sendgridConfigured: boolean;
+  configured: boolean;
   fromEmail: string | null;
   fromName: string | null;
 }
 
 export interface UpdateAdminSettingsInput {
-  sendgridApiKey?: string;
+  apiKey?: string;
   fromEmail?: string;
   fromName?: string;
 }

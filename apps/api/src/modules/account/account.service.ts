@@ -46,7 +46,7 @@ export class AccountService {
   async getMe(user: AuthenticatedUser): Promise<MeResponse> {
     const profile = await this.profiles.ensure(user.id, user.email, this.verifiedDefault(user));
     // When email delivery isn't set up, verification can't be enforced — treat
-    // everyone as verified so the app is never unusable before SendGrid config.
+    // everyone as verified so the app is never unusable before email is set up.
     const emailVerified = profile.emailVerified || !(await this.email.isConfigured());
     return {
       id: user.id,
@@ -76,7 +76,7 @@ export class AccountService {
       return {
         sent: false,
         alreadyVerified: false,
-        message: 'Email verification is unavailable until an admin configures SendGrid.',
+        message: 'Email verification is unavailable until an admin configures email delivery.',
       };
     }
     if (!user.email) {
@@ -149,35 +149,35 @@ export class AccountService {
 
   async getAdminSettings(): Promise<AdminSettings> {
     const values = await this.settings.getMany([
-      SETTINGS_KEYS.sendgridApiKey,
-      SETTINGS_KEYS.sendgridFromEmail,
-      SETTINGS_KEYS.sendgridFromName,
+      SETTINGS_KEYS.emailApiKey,
+      SETTINGS_KEYS.emailFromEmail,
+      SETTINGS_KEYS.emailFromName,
     ]);
     return {
-      sendgridConfigured: !!values[SETTINGS_KEYS.sendgridApiKey] && !!values[SETTINGS_KEYS.sendgridFromEmail],
-      fromEmail: values[SETTINGS_KEYS.sendgridFromEmail],
-      fromName: values[SETTINGS_KEYS.sendgridFromName],
+      configured: !!values[SETTINGS_KEYS.emailApiKey] && !!values[SETTINGS_KEYS.emailFromEmail],
+      fromEmail: values[SETTINGS_KEYS.emailFromEmail],
+      fromName: values[SETTINGS_KEYS.emailFromName],
     };
   }
 
   async updateAdminSettings(input: UpdateAdminSettingsInput): Promise<AdminSettings> {
     // Only overwrite the API key when a non-empty value is supplied, so saving
     // other fields never wipes the stored key.
-    if (input.sendgridApiKey && input.sendgridApiKey.trim()) {
-      await this.settings.set(SETTINGS_KEYS.sendgridApiKey, input.sendgridApiKey.trim());
+    if (input.apiKey && input.apiKey.trim()) {
+      await this.settings.set(SETTINGS_KEYS.emailApiKey, input.apiKey.trim());
     }
     if (input.fromEmail !== undefined) {
-      await this.settings.set(SETTINGS_KEYS.sendgridFromEmail, input.fromEmail.trim());
+      await this.settings.set(SETTINGS_KEYS.emailFromEmail, input.fromEmail.trim());
     }
     if (input.fromName !== undefined) {
-      await this.settings.set(SETTINGS_KEYS.sendgridFromName, input.fromName.trim());
+      await this.settings.set(SETTINGS_KEYS.emailFromName, input.fromName.trim());
     }
     return this.getAdminSettings();
   }
 
   async sendTestEmail(to: string): Promise<void> {
     if (!(await this.email.isConfigured())) {
-      throw new BadRequestException('Configure and save SendGrid settings first.');
+      throw new BadRequestException('Configure and save email (Brevo) settings first.');
     }
     await this.email.sendTest(to);
   }

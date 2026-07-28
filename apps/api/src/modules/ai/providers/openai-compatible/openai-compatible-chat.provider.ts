@@ -61,15 +61,25 @@ export class OpenAICompatibleChatProvider implements IChatProvider {
     options?: ChatOptions,
   ): AsyncIterable<ChatStreamChunk> {
     const model = options?.model ?? this.config.model;
+    const base = {
+      model,
+      messages: messages.map((m) => ({ role: m.role, content: m.content })),
+      temperature: options?.temperature ?? 0.2,
+      max_tokens: options?.maxTokens,
+      stream: true as const,
+    };
     try {
-      const completion = await this.client.chat.completions.create({
-        model,
-        messages: messages.map((m) => ({ role: m.role, content: m.content })),
-        temperature: options?.temperature ?? 0.2,
-        max_tokens: options?.maxTokens,
-        stream: true,
-        stream_options: { include_usage: true },
-      });
+      // `stream_options` gives token usage on the final chunk, but not every
+      // OpenAI-compatible provider accepts it — fall back to a plain stream.
+      let completion;
+      try {
+        completion = await this.client.chat.completions.create({
+          ...base,
+          stream_options: { include_usage: true },
+        });
+      } catch {
+        completion = await this.client.chat.completions.create(base);
+      }
 
       for await (const part of completion) {
         const delta = part.choices[0]?.delta?.content ?? '';

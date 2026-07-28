@@ -153,7 +153,18 @@ returns one consistent error shape and never leaks internals.
 Everything is driven by environment variables — **no code changes**. Chat and
 embeddings are configured independently.
 
-**OpenAI (default)**
+**Google Gemini (default — free, no credit card)**
+```env
+AI_CHAT_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
+AI_CHAT_API_KEY=...            # from aistudio.google.com
+AI_CHAT_MODEL=gemini-2.0-flash
+AI_EMBEDDING_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
+AI_EMBEDDING_API_KEY=...
+AI_EMBEDDING_MODEL=text-embedding-004
+AI_EMBEDDING_DIMENSIONS=768
+```
+
+**OpenAI**
 ```env
 AI_CHAT_BASE_URL=https://api.openai.com/v1
 AI_CHAT_API_KEY=sk-...
@@ -161,7 +172,7 @@ AI_CHAT_MODEL=gpt-4o-mini
 AI_EMBEDDING_BASE_URL=https://api.openai.com/v1
 AI_EMBEDDING_API_KEY=sk-...
 AI_EMBEDDING_MODEL=text-embedding-3-small
-AI_EMBEDDING_DIMENSIONS=1536
+AI_EMBEDDING_DIMENSIONS=1536   # requires vector(1536) — revert migration 20260720000013
 ```
 
 **Groq for chat (fast/cheap), OpenAI for embeddings**
@@ -184,10 +195,10 @@ AI_EMBEDDING_DIMENSIONS=768
 ```
 
 > **Embedding dimensions must match the database.** `document_chunks.embedding`
-> is `vector(1536)`. If you switch to a model with different dimensions (e.g.
-> `nomic-embed-text` = 768), update `AI_EMBEDDING_DIMENSIONS` **and** the
-> `vector(N)` size in `supabase/migrations/..._document_chunks.sql` before first
-> run, then re-embed. The embedding provider throws a clear error on mismatch.
+> is `vector(768)` (Gemini `text-embedding-004`). If you switch to a model with
+> different dimensions, update `AI_EMBEDDING_DIMENSIONS` **and** the `vector(N)`
+> size + `match_document_chunks` RPC (see migration `20260720000013`), then
+> re-embed. The embedding provider throws a clear error on mismatch.
 
 To add a genuinely different protocol (e.g. a non-OpenAI-shaped API), implement
 `IChatProvider` / `IEmbeddingProvider` in a new provider class and add one branch

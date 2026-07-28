@@ -47,7 +47,7 @@ export default function AdminPage() {
   const save = useMutation({
     mutationFn: () =>
       accountApi.updateAdminSettings({
-        sendgridApiKey: apiKey.trim() || undefined,
+        apiKey: apiKey.trim() || undefined,
         fromEmail: fromEmail.trim(),
         fromName: fromName.trim(),
       }),
@@ -55,7 +55,7 @@ export default function AdminPage() {
       setApiKey('');
       void qc.invalidateQueries({ queryKey: ['admin-settings'] });
       void qc.invalidateQueries({ queryKey: ['me'] });
-      toast.success('SendGrid settings saved');
+      toast.success('Email settings saved');
     },
     onError: (e) => toast.error(apiErrorMessage(e, 'Failed to save settings')),
   });
@@ -79,7 +79,7 @@ export default function AdminPage() {
       <div className="mx-auto max-w-3xl px-6 py-10">
         <div className="mb-8">
           <div className="mb-1 font-mono text-xs uppercase tracking-[0.2em] text-primary">Admin</div>
-          <h1 className="font-serif text-3xl font-semibold">Email &amp; SendGrid</h1>
+          <h1 className="font-serif text-3xl font-semibold">Email &amp; Brevo</h1>
         </div>
 
         {isLoading ? (
@@ -88,13 +88,13 @@ export default function AdminPage() {
           <Card>
             <CardHeader className="flex-row items-start justify-between space-y-0">
               <div className="space-y-1.5">
-                <CardTitle>SendGrid</CardTitle>
+                <CardTitle>Brevo</CardTitle>
                 <CardDescription>
                   Powers verification and password-reset emails. The API key is stored securely and
                   never shown again after saving.
                 </CardDescription>
               </div>
-              {settings?.sendgridConfigured ? (
+              {settings?.configured ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800">
                   <CheckCircle2 className="h-3.5 w-3.5" /> Configured
                 </span>
@@ -106,17 +106,17 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="key">SendGrid API key</Label>
+                <Label htmlFor="key">Brevo API key</Label>
                 <Input
                   id="key"
                   type="password"
                   autoComplete="off"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={settings?.sendgridConfigured ? 'Saved — leave blank to keep' : 'SG.xxxxxxxx'}
+                  placeholder={settings?.configured ? 'Saved — leave blank to keep' : 'xkeysib-…'}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Free tier is fine (~100 emails/day). Create a key with “Mail Send” permission.
+                  Free tier is fine (300 emails/day). Create a key under Brevo → SMTP &amp; API → API Keys.
                 </p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -124,7 +124,7 @@ export default function AdminPage() {
                   <Label htmlFor="from-email">From email</Label>
                   <Input id="from-email" type="email" value={fromEmail}
                     onChange={(e) => setFromEmail(e.target.value)} placeholder="you@example.com" />
-                  <p className="text-xs text-muted-foreground">Must be a verified sender in SendGrid.</p>
+                  <p className="text-xs text-muted-foreground">Must be a verified sender in Brevo.</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="from-name">From name</Label>
@@ -143,7 +143,7 @@ export default function AdminPage() {
                       onChange={(e) => setTestTo(e.target.value)} className="h-9 w-56" />
                   </div>
                   <Button variant="outline" onClick={() => test.mutate()}
-                    disabled={test.isPending || !settings?.sendgridConfigured}>
+                    disabled={test.isPending || !settings?.configured}>
                     {test.isPending ? 'Sending…' : 'Send test'}
                   </Button>
                 </div>

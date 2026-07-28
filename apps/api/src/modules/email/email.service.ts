@@ -1,10 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AppSettingsRepository, SETTINGS_KEYS } from '../settings/app-settings.repository';
 
-const SENDGRID_ENDPOINT = 'https://api.sendgrid.com/v3/mail/send';
+// Brevo (free tier: 300 emails/day, single verified sender — no domain needed).
+const BREVO_ENDPOINT = 'https://api.brevo.com/v3/smtp/email';
 const DEFAULT_FROM_NAME = 'DocBrain';
 
-interface SendGridConfig {
+interface EmailConfig {
   apiKey: string;
   fromEmail: string;
   fromName: string;
@@ -16,49 +17,48 @@ export class EmailService {
 
   constructor(private readonly settings: AppSettingsRepository) {}
 
-  /** Load SendGrid config from app_settings, or null when not fully set. */
-  private async loadConfig(): Promise<SendGridConfig | null> {
+  /** Load email config from app_settings, or null when not fully set. */
+  private async loadConfig(): Promise<EmailConfig | null> {
     const values = await this.settings.getMany([
-      SETTINGS_KEYS.sendgridApiKey,
-      SETTINGS_KEYS.sendgridFromEmail,
-      SETTINGS_KEYS.sendgridFromName,
+      SETTINGS_KEYS.emailApiKey,
+      SETTINGS_KEYS.emailFromEmail,
+      SETTINGS_KEYS.emailFromName,
     ]);
-    const apiKey = values[SETTINGS_KEYS.sendgridApiKey];
-    const fromEmail = values[SETTINGS_KEYS.sendgridFromEmail];
+    const apiKey = values[SETTINGS_KEYS.emailApiKey];
+    const fromEmail = values[SETTINGS_KEYS.emailFromEmail];
     if (!apiKey || !fromEmail) return null;
-    return { apiKey, fromEmail, fromName: values[SETTINGS_KEYS.sendgridFromName] || DEFAULT_FROM_NAME };
+    return { apiKey, fromEmail, fromName: values[SETTINGS_KEYS.emailFromName] || DEFAULT_FROM_NAME };
   }
 
   async isConfigured(): Promise<boolean> {
     return (await this.loadConfig()) !== null;
   }
 
-  /** Low-level send. Throws when unconfigured or the SendGrid call fails. */
+  /** Low-level send via Brevo. Throws when unconfigured or the call fails. */
   private async send(to: string, subject: string, html: string, text: string): Promise<void> {
     const config = await this.loadConfig();
     if (!config) throw new Error('Email is not configured');
 
-    const res = await fetch(SENDGRID_ENDPOINT, {
+    const res = await fetch(BREVO_ENDPOINT, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${config.apiKey}`,
+        'api-key': config.apiKey,
         'Content-Type': 'application/json',
+        Accept: 'application/json',
       },
       body: JSON.stringify({
-        personalizations: [{ to: [{ email: to }] }],
-        from: { email: config.fromEmail, name: config.fromName },
+        sender: { email: config.fromEmail, name: config.fromName },
+        to: [{ email: to }],
         subject,
-        content: [
-          { type: 'text/plain', value: text },
-          { type: 'text/html', value: html },
-        ],
+        htmlContent: html,
+        textContent: text,
       }),
     });
 
     if (!res.ok) {
       const body = await res.text();
-      this.logger.error(`SendGrid send failed (${res.status}): ${body.slice(0, 300)}`);
-      throw new Error(`SendGrid responded ${res.status}`);
+      this.logger.error(`Brevo send failed (${res.status}): ${body.slice(0, 300)}`);
+      throw new Error(`Email provider responded ${res.status}`);
     }
   }
 
@@ -80,13 +80,13 @@ export class EmailService {
     );
   }
 
-  /** Admin "send test email" — verifies the SendGrid config works. */
+  /** Admin "send test email" — verifies the email config works. */
   async sendTest(to: string): Promise<void> {
     await this.send(
       to,
       'DocBrain email is working',
-      codeEmailHtml('Test email', 'Your SendGrid integration is configured correctly.', '✓'),
-      'Your SendGrid integration is configured correctly.',
+      codeEmailHtml('Test email', 'Your Brevo email integration is configured correctly.', '✓'),
+      'Your Brevo email integration is configured correctly.',
     );
   }
 }
