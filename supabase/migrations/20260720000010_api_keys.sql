@@ -18,8 +18,11 @@ create index if not exists api_keys_user_id_idx on public.api_keys (user_id);
 
 alter table public.api_keys enable row level security;
 
+-- Idempotent: drop first so re-running this file never errors on existing policies.
+drop policy if exists "api_keys_select_own" on public.api_keys;
 create policy "api_keys_select_own" on public.api_keys
   for select using (auth.uid() = user_id);
 
+drop policy if exists "api_keys_delete_own" on public.api_keys;
 create policy "api_keys_delete_own" on public.api_keys
   for delete using (auth.uid() = user_id);

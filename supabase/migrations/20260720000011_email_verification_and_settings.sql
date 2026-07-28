@@ -33,6 +33,8 @@ create index if not exists user_profiles_email_idx on public.user_profiles (lowe
 
 alter table public.user_profiles enable row level security;
 
+-- Idempotent: drop first so re-running this file never errors on an existing policy.
+drop policy if exists "user_profiles_select_own" on public.user_profiles;
 create policy "user_profiles_select_own" on public.user_profiles
   for select using (auth.uid() = user_id);
 
