@@ -154,14 +154,16 @@ export class ChatService {
       );
     } catch (err) {
       this.logger.error('Chat stream failed', err as Error);
-      // Include a concise provider reason (model/key/endpoint errors are not
-      // secrets) so config problems are diagnosable instead of opaque.
-      const detail = (err as Error)?.message?.replace(/\s+/g, ' ').slice(0, 200);
+      const detail = (err as Error)?.message?.replace(/\s+/g, ' ').slice(0, 200) ?? '';
+      // Rate limits are common on free AI tiers — give clear, actionable text.
+      const rateLimited = /\b429\b|rate limit|quota|resource[_ ]exhausted/i.test(detail);
       yield {
         type: 'error',
-        message: detail
-          ? `The AI provider returned an error: ${detail}`
-          : 'The AI provider is currently unavailable. Please try again.',
+        message: rateLimited
+          ? 'The AI provider is rate-limited right now (free tier). Please wait a minute and try again.'
+          : detail
+            ? `The AI provider returned an error: ${detail}`
+            : 'The AI provider is currently unavailable. Please try again.',
       };
       return;
     }

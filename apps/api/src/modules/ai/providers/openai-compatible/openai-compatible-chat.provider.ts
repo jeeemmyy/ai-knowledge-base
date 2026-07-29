@@ -23,6 +23,9 @@ export class OpenAICompatibleChatProvider implements IChatProvider {
     this.client = new OpenAI({
       baseURL: config.baseURL,
       apiKey: config.apiKey,
+      // Auto-retry transient rate limits (429) with exponential backoff — free
+      // tiers throttle bursts, and most clear within a few seconds.
+      maxRetries: 4,
     });
   }
 

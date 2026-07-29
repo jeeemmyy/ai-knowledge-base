@@ -17,6 +17,9 @@ export class OpenAICompatibleEmbeddingProvider implements IEmbeddingProvider {
     this.client = new OpenAI({
       baseURL: config.baseURL,
       apiKey: config.apiKey,
+      // Auto-retry transient rate limits (429) with backoff — free tiers cap
+      // requests per minute, and indexing several documents can burst past it.
+      maxRetries: 4,
     });
     this.dimensions = config.dimensions;
   }
