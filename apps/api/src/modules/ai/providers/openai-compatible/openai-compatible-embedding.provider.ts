@@ -26,10 +26,23 @@ export class OpenAICompatibleEmbeddingProvider implements IEmbeddingProvider {
     if (inputs.length === 0) return [];
 
     try {
-      const response = await this.client.embeddings.create({
-        model: this.config.model,
-        input: inputs,
-      });
+      // Request the exact dimension. Models like Gemini's gemini-embedding-001
+      // default to a larger size (3072) and only emit `dimensions` when asked;
+      // OpenAI text-embedding-3-* accept it too. Providers that don't support
+      // the param (e.g. fixed-size models) get a plain retry.
+      let response;
+      try {
+        response = await this.client.embeddings.create({
+          model: this.config.model,
+          input: inputs,
+          dimensions: this.dimensions,
+        });
+      } catch {
+        response = await this.client.embeddings.create({
+          model: this.config.model,
+          input: inputs,
+        });
+      }
 
       // Preserve input order; OpenAI returns an `index` per item.
       const sorted = [...response.data].sort((a, b) => a.index - b.index);

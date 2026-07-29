@@ -160,7 +160,7 @@ AI_CHAT_API_KEY=...            # from aistudio.google.com
 AI_CHAT_MODEL=gemini-2.0-flash
 AI_EMBEDDING_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
 AI_EMBEDDING_API_KEY=...
-AI_EMBEDDING_MODEL=text-embedding-004
+AI_EMBEDDING_MODEL=gemini-embedding-001
 AI_EMBEDDING_DIMENSIONS=768
 ```
 
@@ -195,7 +195,7 @@ AI_EMBEDDING_DIMENSIONS=768
 ```
 
 > **Embedding dimensions must match the database.** `document_chunks.embedding`
-> is `vector(768)` (Gemini `text-embedding-004`). If you switch to a model with
+> is `vector(768)` (Gemini `gemini-embedding-001`). If you switch to a model with
 > different dimensions, update `AI_EMBEDDING_DIMENSIONS` **and** the `vector(N)`
 > size + `match_document_chunks` RPC (see migration `20260720000013`), then
 > re-embed. The embedding provider throws a clear error on mismatch.
