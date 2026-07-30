@@ -153,15 +153,17 @@ returns one consistent error shape and never leaks internals.
 Everything is driven by environment variables — **no code changes**. Chat and
 embeddings are configured independently.
 
-**Google Gemini (default — free, no credit card)**
+**Default — free, no credit card: Gemini chat + Jina embeddings**
+Gemini's free tier rate-limits embeddings too aggressively, so embeddings run on
+Jina (jina.ai, 10M free tokens, no card). A neat demo of the split-provider design.
 ```env
 AI_CHAT_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
 AI_CHAT_API_KEY=...            # from aistudio.google.com
 AI_CHAT_MODEL=gemini-2.0-flash
-AI_EMBEDDING_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
-AI_EMBEDDING_API_KEY=...
-AI_EMBEDDING_MODEL=gemini-embedding-001
-AI_EMBEDDING_DIMENSIONS=768
+AI_EMBEDDING_BASE_URL=https://api.jina.ai/v1
+AI_EMBEDDING_API_KEY=...       # from jina.ai
+AI_EMBEDDING_MODEL=jina-embeddings-v3
+AI_EMBEDDING_DIMENSIONS=1024
 ```
 
 **OpenAI**
@@ -195,7 +197,7 @@ AI_EMBEDDING_DIMENSIONS=768
 ```
 
 > **Embedding dimensions must match the database.** `document_chunks.embedding`
-> is `vector(768)` (Gemini `gemini-embedding-001`). If you switch to a model with
+> is `vector(1024)` (Jina `jina-embeddings-v3`). If you switch to a model with
 > different dimensions, update `AI_EMBEDDING_DIMENSIONS` **and** the `vector(N)`
 > size + `match_document_chunks` RPC (see migration `20260720000013`), then
 > re-embed. The embedding provider throws a clear error on mismatch.
